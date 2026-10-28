@@ -30,8 +30,8 @@ namespace Trabalho{
         
         public int Dec()
         {
-            var xBin = Gene[TAM_COORD..];
-            var yBin = Gene[..TAM_COORD];
+            var xBin = Gene[..TAM_COORD];
+            var yBin = Gene[TAM_COORD..];
             
             var xDec = BinArrayParaReal(xBin);
             var yDec = BinArrayParaReal(yBin);
