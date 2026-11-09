@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apresentação: Algoritmo Genético - Maximização da Função F6</title>
+  <!-- Chart.js para visualização da convergência -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- MathJax para renderização de fórmulas matemáticas -->
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --card-bg: #1e293b;
+      --accent-blue: #38bdf8;
+      --accent-purple: #a855f7;
+      --accent-green: #34d399;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-color: #334155;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Container de Slides */
+    .slide-viewport {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+      position: relative;
+    }
+
+    .slide {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 1100px;
+      height: 92%;
+      max-height: 680px;
+      padding: 40px 48px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      animation: fadeIn 0.35s ease-in-out forwards;
+    }
+
+    .slide.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Tipografia */
+    .slide-header {
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 14px;
+      margin-bottom: 20px;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+      color: var(--accent-blue);
+      margin-bottom: 6px;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      color: #fff;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    h2 {
+      font-size: 1.7rem;
+      color: #fff;
+      font-weight: 700;
+    }
+
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      margin-top: 6px;
+    }
+
+    .slide-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    /* Grid e Cards */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+
+    .info-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 18px 20px;
+    }
+
+    .info-card h3 {
+      font-size: 1rem;
+      color: var(--accent-blue);
+      margin-bottom: 8px;
+    }
+
+    .info-card p, .info-card li {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .info-card ul {
+      padding-left: 18px;
+    }
+
+    .stat-val {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #fff;
+      margin-top: 4px;
+    }
+
+    .highlight-green {
+      color: var(--accent-green) !important;
+    }
+
+    .highlight-blue {
+      color: var(--accent-blue) !important;
+    }
+
+    /* Barra de Navegação */
+    .nav-bar {
+      height: 70px;
+      background: #090d16;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 40px;
+    }
+
+    .nav-btn {
+      background: var(--card-bg);
+      color: #fff;
+      border: 1px solid var(--border-color);
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .nav-btn:hover:not(:disabled) {
+      background: var(--accent-blue);
+      color: #000;
+      border-color: var(--accent-blue);
+    }
+
+    .nav-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .slide-indicator {
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    /* Estilização de código / bits */
+    .code-box {
+      background: #090d16;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-family: 'Consolas', monospace;
+      font-size: 0.88rem;
+      color: var(--accent-green);
+      word-break: break-all;
+    }
+
+    /* Tabela de Dados compacta */
+    .scroll-table-container {
+      max-height: 280px;
+      overflow-y: auto;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      text-align: left;
+    }
+
+    th {
+      background: #090d16;
+      color: var(--accent-blue);
+      padding: 10px 14px;
+      position: sticky;
+      top: 0;
+    }
+
+    td {
+      padding: 8px 14px;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+      color: #cbd5e1;
+    }
+
+    tr:nth-child(even) {
+      background: rgba(15, 23, 42, 0.3);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="slide-viewport">
+
+    <!-- SLIDE 1: Capa -->
+    <div class="slide active" id="slide-1">
+      <div class="slide-header">
+        <span class="badge">Inteligência Artificial • Prof. Celso Camilo</span>
+        <h1>Otimização por Algoritmo Genético</h1>
+        <p class="subtitle">Maximização da Função de Schaffer F6 com Representação Binária e Elitismo</p>
+      </div>
+      <div class="slide-body">
+        <div class="grid-2">
+          <div class="info-card">
+            <h3>🎯 Objetivo do Trabalho</h3>
+            <p>Desenvolver e analisar um Algoritmo Genético Canônico capaz de encontrar o ponto máximo global da função multimodal de Schaffer F6, simulando a evolução natural por meio de seleção, recombinação e mutação.</p>
+          </div>
+          <div class="info-card">
+            <h3>⚙️ Especificações Estabelecidas</h3>
+            <ul>
+              <li><strong>Cromossomo:</strong> 44 bits (22 bits para $x$ e 22 para $y$)</li>
+              <li><strong>Domínio:</strong> $x, y \in [-100, +100]$</li>
+              <li><strong>População:</strong> 100 indivíduos | 40 Gerações</li>
+              <li><strong>Operadores:</strong> Crossover 1 ponto (65%), Mutação bit a bit (0.8%) e Elitismo</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div style="color: var(--text-muted); font-size: 0.85rem;">Desenvolvido em C# (.NET 10) • Utilize as teclas ⬅️ e ➡️ ou os botões para navegar</div>
+    </div>
+
+    <!-- SLIDE 2: A Função F6 -->
+    <div class="slide" id="slide-2">
+      <div class="slide-header">
+        <span class="badge">Modelagem Matemática</span>
+        <h2>A Função de Schaffer F6</h2>
+        <p class="subtitle">Um dos benchmarks mais desafiadores para algoritmos de otimização</p>
+      </div>
+      <div class="slide-body">
+        <div class="grid-2" style="align-items: center;">
+          <div class="info-card">
+            <h3>Equação da Função</h3>
+            <div style="font-size: 1.15rem; margin: 16px 0; text-align: center; color: #fff;">
+              $$F_6(x, y) = 0.5 - \frac{\sin^2\left(\sqrt{x^2 + y^2}\right) - 0.5}{\left(1.0 + 0.001(x^2 + y^2)\right)^2}$$
+            </div>
+            <ul>
+              <li><strong>Ótimo Global Teórico:</strong> No ponto $(0, 0)$, com valor exato $F_6(0,0) = 1.0$.</li>
+              <li><strong>Aptidão (Fitness):</strong> Como $F_6(x, y) \in [0, 1]$, o próprio valor de $F_6$ é usado diretamente na seleção por roleta.</li>
+            </ul>
+          </div>
+          <div class="info-card">
+            <h3>Por que a F6 é difícil?</h3>
+            <p style="margin-bottom: 12px;">A função se comporta como ondas circulares concêntricas propagando na água:</p>
+            <ul>
+              <li>Possui <strong>dezenas de máximos locais</strong> concêntricos em raios múltiplos de $\pi$ ($\approx 3.14$, $6.28$).</li>
+              <li>Algoritmos baseados em gradiente facilmente ficam presos no primeiro anel.</li>
+              <li>O Algoritmo Genético consegue explorar globalmente e saltar barreiras de mínimos locais.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div style="color: var(--text-muted); font-size: 0.85rem;">Slide 78 do material de aula</div>
+    </div>
+
+    <!-- SLIDE 3: Genótipo e Fenótipo -->
+    <div class="slide" id="slide-3">
+      <div class="slide-header">
+        <span class="badge">Codificação e Mapeamento</span>
+        <h2>Genótipo $\to$ Fenótipo (Decodificação)</h2>
+        <p class="subtitle">Como 44 bits viram coordenadas no plano cartesiano $[-100, 100]$</p>
+      </div>
+      <div class="slide-body">
+        <div class="grid-2">
+          <div class="info-card">
+            <h3>1. Estrutura do Cromossomo</h3>
+            <p>O indivíduo é composto por uma cadeia linear de 44 bits:</p>
+            <div class="code-box" style="margin: 10px 0;">
+              [ 22 bits para X ] [ 22 bits para Y ]
+            </div>
+            <p>Com 22 bits, temos $2^{22} = 4.194.304$ estados discretos, garantindo uma precisão de $200 / (2^{22}-1) \approx 0.000047$ (mais de 4 casas decimais).</p>
+          </div>
+          <div class="info-card">
+            <h3>2. Equação de Mapeamento Real</h3>
+            <p>Conversão do valor binário decimal para o intervalo real $[-100, +100]$:</p>
+            <div style="font-size: 1rem; margin: 12px 0; text-align: center;">
+              $$X_{\text{real}} = \left(B_x \times \frac{\text{máx} - \text{mín}}{2^{22} - 1}\right) + \text{mín}$$
+            </div>
+            <p><strong>Exemplo Validado do Slide 80:</strong><br>
+            Cromossomo: <code>0000101000011000000001...</code><br>
+            $X \approx -92.114208$ | $Y \approx 8.248689$ $\implies$ $F_6 \approx 0.494929$</p>
+          </div>
+        </div>
+      </div>
+      <div style="color: var(--text-muted); font-size: 0.85rem;">Slide 64 e 80 do material</div>
+    </div>
+
+    <!-- SLIDE 4: Resultados da Execução -->
+    <div class="slide" id="slide-4">
+      <div class="slide-header">
+        <span class="badge">Experimento Prático</span>
+        <h2>Resultado Obtido na Execução</h2>
+        <p class="subtitle">Métricas da melhor solução encontrada pelo algoritmo em 40 gerações</p>
+      </div>
+      <div class="slide-body">
+        <div class="grid-4" style="margin-bottom: 24px;">
+          <div class="info-card">
+            <h3>Melhor Fitness</h3>
+            <div class="stat-val highlight-green">0.990241</div>
+            <p>Ótimo teórico: 1.000000</p>
+          </div>
+          <div class="info-card">
+            <h3>Coordenada X</h3>
+            <div class="stat-val highlight-blue">3.136087</div>
+            <p>Próximo a $\pi \approx 3.1415$</p>
+          </div>
+          <div class="info-card">
+            <h3>Coordenada Y</h3>
+            <div class="stat-val highlight-blue">0.238061</div>
+            <p>Próximo ao eixo central 0</p>
+          </div>
+          <div class="info-card">
+            <h3>Distância ao Centro</h3>
+            <div class="stat-val">3.1451</div>
+            <p>$\sqrt{X^2 + Y^2}$</p>
+          </div>
+        </div>
+        <div class="info-card">
+          <h3>💡 Análise do Ponto Encontrado</h3>
+          <p>O algoritmo convergiu com precisão para o <strong>primeiro anel concêntrico ótimo</strong> da função F6, localizado a um raio de aproximadamente $r = \pi \approx 3.14159$. Nesse anel, o seno atinge seu pico máximo secundário com fitness de $99.02\%$ do valor ideal!</p>
+        </div>
+      </div>
+      <div style="color: var(--text-muted); font-size: 0.85rem;">Execução realizada com 100 indivíduos e 40 gerações</div>
+    </div>
+
+    <!-- SLIDE 5: Gráfico de Convergência -->
+    <div class="slide" id="slide-5">
+      <div class="slide-header">
+        <span class="badge">Dinâmica Evolutiva</span>
+        <h2>Curva de Convergência das Gerações</h2>
+        <p class="subtitle">Evolução do Melhor Indivíduo vs. Média da População ao longo do tempo</p>
+      </div>
+      <div class="slide-body" style="height: 360px;">
+        <canvas id="evolutionChart" style="max-height: 350px; width: 100%;"></canvas>
+      </div>
+      <div style="color: var(--text-muted); font-size: 0.85rem;">Note como o Elitismo garante que a curva azul jamais sofra quedas</div>
+    </div>
+
+    <!-- SLIDE 6: Tabela Completa de Gerações -->
+    <div class="slide" id="slide-6">
+      <div class="slide-header">
+        <span class="badge">Registro de Dados</span>
+        <h2>Log de Execução (40 Gerações)</h2>
+        <p class="subtitle">Valores registrados a cada ciclo evolutivo</p>
+      </div>
+      <div class="slide-body">
+        <div class="scroll-table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Geração</th>
+                <th>Melhor F6</th>
+                <th>Média da População</th>
+                <th>Melhor X</th>
+                <th>Melhor Y</th>
+              </tr>
+            </thead>
+            <tbody id="table-body">
+              <!-- Gerado via JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div style="color: var(--text-muted); font-size: 0.85rem;">A média subiu de 0.498 para mais de 0.856 nas gerações avançadas</div>
+    </div>
+
+    <!-- SLIDE 7: Conclusão -->
+    <div class="slide" id="slide-7">
+      <div class="slide-header">
+        <span class="badge">Conclusão do Trabalho</span>
+        <h2>Aprendizados e Considerações Finais</h2>
+        <p class="subtitle">O papel de cada operador no sucesso da otimização</p>
+      </div>
+      <div class="slide-body">
+        <div class="grid-3">
+          <div class="info-card">
+            <h3>🛡️ Elitismo</h3>
+            <p>Foi o pilar que garantiu a estabilidade. Sem o elitismo, bons cromossomos eram destruídos por crossovers infelizes. Com ele, o fitness foi estritamente não-decrescente.</p>
+          </div>
+          <div class="info-card">
+            <h3>🔄 Roleta & Crossover</h3>
+            <p>A roleta exerceu a pressão seletiva necessária, multiplicando indivíduos com aptidão superior a 0.90 e recombinando caudas para refinar as coordenadas.</p>
+          </div>
+          <div class="info-card">
+            <h3>⚡ Mutação (0.8%)</h3>
+            <p>Atuou como mecanismo de fuga de mínimos locais, permitindo que a população saltasse do platô de $0.962$ para $0.985$ e finalmente para $0.990$.</p>
+          </div>
+        </div>
+      </div>
+      <div style="color: var(--text-muted); font-size: 0.85rem;">Trabalho prático concluído com sucesso conforme todas as regras estabelecidas!</div>
+    </div>
+
+  </div>
+
+  <!-- Barra Inferior -->
+  <div class="nav-bar">
+    <button class="nav-btn" id="prev-btn" onclick="prevSlide()">◀ Anterior</button>
+    <div class="slide-indicator" id="slide-indicator">Slide 1 de 7</div>
+    <button class="nav-btn" id="next-btn" onclick="nextSlide()">Próximo ▶</button>
+  </div>
+
+  <script>
+    // Dados da Execução Coletada
+    const runData = [
+      { g: 1, best: 0.920232, avg: 0.498535, x: 6.517436, y: 6.855895 },
+      { g: 2, best: 0.920232, avg: 0.521608, x: 6.517436, y: 6.855895 },
+      { g: 3, best: 0.921730, avg: 0.542170, x: 6.468608, y: 6.855990 },
+      { g: 4, best: 0.921731, avg: 0.558945, x: 6.468608, y: 6.855895 },
+      { g: 5, best: 0.921785, avg: 0.604282, x: 6.462504, y: 6.855895 },
+      { g: 6, best: 0.921785, avg: 0.615146, x: 6.462504, y: 6.855895 },
+      { g: 7, best: 0.921793, avg: 0.676008, x: 6.468608, y: 6.848885 },
+      { g: 8, best: 0.962601, avg: 0.672951, x: 0.218606, y: 6.259610 },
+      { g: 9, best: 0.962601, avg: 0.712567, x: 0.218606, y: 6.259610 },
+      { g: 10, best: 0.962638, avg: 0.766593, x: 0.218606, y: 6.261136 },
+      { g: 11, best: 0.962638, avg: 0.770879, x: 0.218606, y: 6.261136 },
+      { g: 12, best: 0.962638, avg: 0.795155, x: 0.218606, y: 6.261136 },
+      { g: 13, best: 0.962638, avg: 0.817925, x: 0.218606, y: 6.261136 },
+      { g: 14, best: 0.962776, avg: 0.765673, x: 0.212503, y: 6.273343 },
+      { g: 15, best: 0.962776, avg: 0.796867, x: 0.212503, y: 6.273343 },
+      { g: 16, best: 0.962776, avg: 0.772731, x: 0.212503, y: 6.273343 },
+      { g: 17, best: 0.962776, avg: 0.769624, x: 0.212503, y: 6.273343 },
+      { g: 18, best: 0.962776, avg: 0.784125, x: 0.212503, y: 6.273343 },
+      { g: 19, best: 0.962776, avg: 0.769737, x: 0.212503, y: 6.273343 },
+      { g: 20, best: 0.962776, avg: 0.733653, x: 0.212503, y: 6.273438 },
+      { g: 21, best: 0.962776, avg: 0.757519, x: 0.212503, y: 6.273438 },
+      { g: 22, best: 0.962776, avg: 0.757063, x: 6.265284, y: 0.384593 },
+      { g: 23, best: 0.962776, avg: 0.748791, x: 6.265284, y: 0.384593 },
+      { g: 24, best: 0.962776, avg: 0.761031, x: 6.265284, y: 0.384593 },
+      { g: 25, best: 0.962776, avg: 0.817529, x: 6.265284, y: 0.384641 },
+      { g: 26, best: 0.962776, avg: 0.805420, x: 6.265284, y: 0.384641 },
+      { g: 27, best: 0.962776, avg: 0.799360, x: 6.265284, y: 0.384641 },
+      { g: 28, best: 0.962776, avg: 0.774604, x: 6.265284, y: 0.384641 },
+      { g: 29, best: 0.962776, avg: 0.804615, x: 6.265284, y: 0.384641 },
+      { g: 30, best: 0.962776, avg: 0.824157, x: 6.265284, y: 0.384641 },
+      { g: 31, best: 0.985490, avg: 0.818106, x: 3.136087, y: 0.677562 },
+      { g: 32, best: 0.985490, avg: 0.824066, x: 3.136087, y: 0.677562 },
+      { g: 33, best: 0.985490, avg: 0.797835, x: 3.136087, y: 0.677562 },
+      { g: 34, best: 0.985490, avg: 0.790628, x: 3.136087, y: 0.677562 },
+      { g: 35, best: 0.990006, avg: 0.775981, x: 3.136087, y: 0.347924 },
+      { g: 36, best: 0.990006, avg: 0.854071, x: 3.136087, y: 0.347924 },
+      { g: 37, best: 0.990193, avg: 0.807113, x: 3.136087, y: 0.275207 },
+      { g: 38, best: 0.990241, avg: 0.856746, x: 3.136087, y: 0.238061 },
+      { g: 39, best: 0.990241, avg: 0.818178, x: 3.136087, y: 0.238061 },
+      { g: 40, best: 0.990241, avg: 0.833837, x: 3.136087, y: 0.238061 }
+    ];
+
+    // Preenche a tabela
+    const tbody = document.getElementById('table-body');
+    runData.forEach(item => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><strong>${item.g}</strong></td>
+        <td style="color: var(--accent-green); font-weight: 600;">${item.best.toFixed(6)}</td>
+        <td>${item.avg.toFixed(6)}</td>
+        <td>${item.x.toFixed(6)}</td>
+        <td>${item.y.toFixed(6)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    // Controle de Navegação de Slides
+    let currentSlide = 1;
+    const totalSlides = 7;
+
+    function updateSlides() {
+      document.querySelectorAll('.slide').forEach((slide, idx) => {
+        slide.classList.toggle('active', idx + 1 === currentSlide);
+      });
+      document.getElementById('slide-indicator').textContent = `Slide ${currentSlide} de ${totalSlides}`;
+      document.getElementById('prev-btn').disabled = (currentSlide === 1);
+      document.getElementById('next-btn').disabled = (currentSlide === totalSlides);
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) {
+        currentSlide++;
+        updateSlides();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        currentSlide--;
+        updateSlides();
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') nextSlide();
+      if (e.key === 'ArrowLeft') prevSlide();
+    });
+
+    // Renderização do Gráfico com Chart.js
+    window.addEventListener('load', () => {
+      const ctx = document.getElementById('evolutionChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: runData.map(d => `G${d.g}`),
+          datasets: [
+            {
+              label: 'Melhor Indivíduo (Elitismo)',
+              data: runData.map(d => d.best),
+              borderColor: '#38bdf8',
+              backgroundColor: 'rgba(56, 189, 248, 0.1)',
+              borderWidth: 3,
+              pointRadius: 2,
+              tension: 0.1,
+              fill: true
+            },
+            {
+              label: 'Média da População',
+              data: runData.map(d => d.avg),
+              borderColor: '#a855f7',
+              borderWidth: 2,
+              borderDash: [5, 5],
+              pointRadius: 0,
+              tension: 0.2
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: { color: '#f8fafc', font: { size: 13 } }
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false
+            }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(51, 65, 85, 0.3)' },
+              ticks: { color: '#94a3b8' }
+            },
+            y: {
+              min: 0.45,
+              max: 1.0,
+              grid: { color: 'rgba(51, 65, 85, 0.3)' },
+              ticks: { color: '#94a3b8' }
+            }
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -7,28 +7,22 @@ namespace Trabalho{
 
 
     public class Individuo{
-
+        static readonly Random rand = new Random();
         public const int TAM_CROMOSSOMO = 44;
         public const int TAM_COORD = 22;
         public const int DOM_MIN = -100;
         public const int DOM_MAX = 100;
-
-        static readonly Random rand = new Random();
+        public double fitness {get;set;}
+        public double x;
+        public double y;
+        public int[] Gene { get; set; } = new int[TAM_CROMOSSOMO];
 
         public Individuo()
         {
             gerarGenes();
             DecodificacaoEAvaliacao();
         }
-
-        public double fitness {get;set;}
-        public double x;
-        public double y;
-
-    // hardcodado o genotipo do slide pra teste
-        public int[] Gene { get; set; } = new int[TAM_CROMOSSOMO];
-        
-
+   
         public void gerarGenes()
         {
             for(int i = 0; i < this.Gene.Length; i++)
@@ -42,7 +36,7 @@ namespace Trabalho{
             var clone = new Individuo();
             clone.Gene = (int[]) this.Gene.Clone();
             clone.x = this.x;
-            clone.y = this.y;
+            clone.y = y;
             clone.fitness = this.fitness;
 
             return clone;
@@ -63,14 +57,14 @@ namespace Trabalho{
 
         public double BinArrayParaReal(int[] binArray)
         {
-            double valor = 0;
+            double resultado = 0;
 
             for(int i = binArray.Length, y = 0; i > 0; i--, y++)
             {
-                valor += binArray[y] * Math.Pow(2, i - 1);
+                resultado += binArray[y] * Math.Pow(2, i - 1);
             }
             
-            return valor;
+            return resultado;
         }
 
         public double CalcularFuncaoF6(double x, double y)
@@ -88,15 +82,15 @@ namespace Trabalho{
         static readonly Random rand = new Random();
         static void Main(string[] args)
         {
-            const int TOTAL_POP = 100;
-            const int NUM_GERACOES = 40;
+            const int TOTAL_POP = 40;
+            const int NUM_GERACOES = 100;
 
 
-            Individuo[] populacao = new Individuo[TOTAL_POP];
+            List<Individuo> populacao = new List<Individuo>(TOTAL_POP);
          
             // Inicializando a primeira população
-            for(int i = 0; i < populacao.Length; i++){
-               populacao[i] = new Individuo(); 
+            for(int i = 0; i < TOTAL_POP; i++){
+               populacao.Add(new Individuo()); 
             }   
 
 
@@ -127,7 +121,7 @@ namespace Trabalho{
                     }
                 }
                 
-                populacao = novaPopulacao.ToArray();
+                populacao = novaPopulacao;
 
 
 
@@ -150,12 +144,12 @@ namespace Trabalho{
 
 
 
-        static public Individuo? Roleta(Individuo[] populacao)
+        static public Individuo? Roleta(List<Individuo> populacao)
         {
             double somaAptidoes = 0;
             double somaAcumulada = 0;
 
-            Individuo? paiEscolhido = null;
+            Individuo paiEscolhido = null;
             
             foreach(Individuo ind in populacao)
             {
@@ -213,7 +207,7 @@ namespace Trabalho{
             individuo.DecodificacaoEAvaliacao();
         }
 
-        static public Individuo ObterMelhorIndividuo(Individuo[] populacao)
+        static public Individuo ObterMelhorIndividuo(List<Individuo> populacao)
         {
             Individuo melhor = populacao[0];
             foreach(var ind in populacao)
